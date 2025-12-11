@@ -1,0 +1,211 @@
+<div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered mb-5">Odometry Performance in Degenerate Environments</h2>
+    <div class="content">
+        <div class="table-container">
+            <table class="table is-bordered is-striped is-narrow is-fullwidth" id="degraded-scenarios-table">
+                <thead>
+                    <tr>
+                        <th colspan="15" class="has-text-centered is-size-6" style="border-left: none; border-right: none; padding-top: 1em; padding-bottom: 1em;">
+                            Quantitative evaluation of odometry performance in degenerate environments.
+                        </th>
+                    </tr>
+                    <tr class="is-selected">
+                        <th colspan="2" rowspan="3" style="vertical-align: middle; text-align: center;"><strong>Method</strong></th>
+                        <th colspan="4" class="has-text-centered" style="border-bottom: 1px solid #dbdbdb;">Geometric Degeneration</th>
+                        <th colspan="4" class="has-text-centered" style="border-bottom: 1px solid #dbdbdb;">Range Degeneration</th>
+                        <th colspan="4" class="has-text-centered" style="border-bottom: 1px solid #dbdbdb;">Planar Degeneration</th>
+                        <th rowspan="3" style="vertical-align: middle; text-align: center;"><strong>Average CE ↓</strong></th>
+                    </tr>
+                    <tr class="is-selected">
+                        <th colspan="2" class="has-text-centered" style="border-bottom: 1px solid #dbdbdb;">ATE [m] ↓</th>
+                        <th colspan="2" class="has-text-centered" style="border-bottom: 1px solid #dbdbdb;">ARE [rad] ↓</th>
+                        <th colspan="2" class="has-text-centered" style="border-bottom: 1px solid #dbdbdb;">ATE [m] ↓</th>
+                        <th colspan="2" class="has-text-centered" style="border-bottom: 1px solid #dbdbdb;">ARE [rad] ↓</th>
+                        <th colspan="2" class="has-text-centered" style="border-bottom: 1px solid #dbdbdb;">ATE [m] ↓</th>
+                        <th colspan="2" class="has-text-centered" style="border-bottom: 1px solid #dbdbdb;">ARE [rad] ↓</th>
+                    </tr>
+                    <tr class="is-selected">
+                        <th class="has-text-centered">RMSE</th>
+                        <th class="has-text-centered">STD</th>
+                        <th class="has-text-centered">RMSE</th>
+                        <th class="has-text-centered">STD</th>
+                        <th class="has-text-centered">RMSE</th>
+                        <th class="has-text-centered">STD</th>
+                        <th class="has-text-centered">RMSE</th>
+                        <th class="has-text-centered">STD</th>
+                        <th class="has-text-centered">RMSE</th>
+                        <th class="has-text-centered">STD</th>
+                        <th class="has-text-centered">RMSE</th>
+                        <th class="has-text-centered">STD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background-color: #f0f0f0;">
+                        <td colspan="2">ORB-SLAM3</td>
+                        <td>2.731</td>
+                        <td>0.946</td>
+                        <td>0.021</td>
+                        <td>0.013</td>
+                        <td>1.502</td>
+                        <td>0.671</td>
+                        <td>0.025</td>
+                        <td>0.011</td>
+                        <td>0.046</td>
+                        <td>0.009</td>
+                        <td>0.007</td>
+                        <td>0.003</td>
+                        <td>0.722</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Hector</td>
+                        <td>13.535</td>
+                        <td>5.292</td>
+                        <td>0.027</td>
+                        <td>0.013</td>
+                        <td>12.357</td>
+                        <td>6.469</td>
+                        <td>0.117</td>
+                        <td>0.063</td>
+                        <td>5.582</td>
+                        <td>2.136</td>
+                        <td>0.021</td>
+                        <td>0.012</td>
+                        <td>6.328</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Karto</td>
+                        <td>11.283</td>
+                        <td>5.195</td>
+                        <td>0.026</td>
+                        <td>0.012</td>
+                        <td>10.957</td>
+                        <td>5.264</td>
+                        <td>0.192</td>
+                        <td>0.119</td>
+                        <td>3.435</td>
+                        <td>1.719</td>
+                        <td>0.019</td>
+                        <td>0.010</td>
+                        <td>4.319</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3" style="vertical-align: middle; text-align: center;">CSM</td>
+                        <td>$\theta = 1.0$</td>
+                        <td>10.325</td>
+                        <td>4.879</td>
+                        <td>0.029</td>
+                        <td>0.014</td>
+                        <td>9.773</td>
+                        <td>5.132</td>
+                        <td>0.073</td>
+                        <td>0.044</td>
+                        <td>3.253</td>
+                        <td>1.658</td>
+                        <td>0.017</td>
+                        <td>0.009</td>
+                        <td>3.912</td>
+                    </tr>
+                    <tr>
+                        <td>$\theta = 0.5$</td>
+                        <td>8.858</td>
+                        <td>3.694</td>
+                        <td>0.037</td>
+                        <td>0.025</td>
+                        <td>6.633</td>
+                        <td>3.197</td>
+                        <td>0.168</td>
+                        <td>0.095</td>
+                        <td>1.146</td>
+                        <td>0.732</td>
+                        <td>0.028</td>
+                        <td>0.019</td>
+                        <td>2.812</td>
+                    </tr>
+                    <tr>
+                        <td>$\theta = 0.1$</td>
+                        <td>5.222</td>
+                        <td>1.941</td>
+                        <td>0.084</td>
+                        <td>0.052</td>
+                        <td>5.504</td>
+                        <td>2.677</td>
+                        <td>0.191</td>
+                        <td>0.119</td>
+                        <td>0.946</td>
+                        <td>0.632</td>
+                        <td>0.036</td>
+                        <td>0.026</td>
+                        <td>1.997</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Cartographer</td>
+                        <td>4.231</td>
+                        <td>1.289</td>
+                        <td>0.027</td>
+                        <td>0.014</td>
+                        <td>3.643</td>
+                        <td>1.912</td>
+                        <td>0.085</td>
+                        <td>0.036</td>
+                        <td>0.930</td>
+                        <td>0.293</td>
+                        <td>0.029</td>
+                        <td>0.017</td>
+                        <td>1.490</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">DN-CSM</td>
+                        <td>3.038</td>
+                        <td>1.136</td>
+                        <td><u style="font-weight: bold;">0.015</u></td>
+                        <td><u style="font-weight: bold;">0.008</u></td>
+                        <td>3.044</td>
+                        <td>1.573</td>
+                        <td>0.035</td>
+                        <td>0.017</td>
+                        <td>0.913</td>
+                        <td>0.597</td>
+                        <td>0.032</td>
+                        <td>0.021</td>
+                        <td>1.180</td>
+                    </tr>
+                    <tr style="background-color: #ffe6e6;">
+                        <td colspan="2">DGMapping (w/o)</td>
+                        <td><u style="font-weight: bold;">2.135</u></td>
+                        <td><u style="font-weight: bold;">0.994</u></td>
+                        <td><strong style="color: #000;">0.013</strong></td>
+                        <td><strong style="color: #000;">0.007</strong></td>
+                        <td><u style="font-weight: bold;">2.802</u></td>
+                        <td><u style="font-weight: bold;">1.307</u></td>
+                        <td><u style="font-weight: bold;">0.033</u></td>
+                        <td><u style="font-weight: bold;">0.016</u></td>
+                        <td><u style="font-weight: bold;">0.441</u></td>
+                        <td><u style="font-weight: bold;">0.206</u></td>
+                        <td><u style="font-weight: bold;">0.025</u></td>
+                        <td><u style="font-weight: bold;">0.014</u></td>
+                        <td><u style="font-weight: bold;">0.908</u></td>
+                    </tr>
+                    <tr style="background-color: #ffe6e6;">
+                        <td colspan="2"><strong>DGMapping (ours)</strong></td>
+                        <td><strong style="color: #000;">1.997</strong></td>
+                        <td><strong style="color: #000;">0.841</strong></td>
+                        <td><strong style="color: #000;">0.013</strong></td>
+                        <td><strong style="color: #000;">0.007</strong></td>
+                        <td><strong style="color: #000;">2.541</strong></td>
+                        <td><strong style="color: #000;">1.151</strong></td>
+                        <td><strong style="color: #000;">0.032</strong></td>
+                        <td><strong style="color: #000;">0.015</strong></td>
+                        <td><strong style="color: #000;">0.184</strong></td>
+                        <td><strong style="color: #000;">0.080</strong></td>
+                        <td><strong style="color: #000;">0.011</strong></td>
+                        <td><strong style="color: #000;">0.006</strong></td>
+                        <td><strong style="color: #000;">0.796</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+        <p class="is-size-7 mt-3">
+            <span class="has-text-weight-semibold">Notes:</span> The Absolute Trajectory Error (ATE, m) and Absolute Rotational Error (ARE, rad) are reported. The proposed method is highlighted in <span style="background-color: #ffe6e6; padding: 2px 5px; border-radius: 3px;">light red</span>, and the visual reference (ORB-SLAM3) is shaded in <span style="background-color: #f0f0f0; padding: 2px 5px; border-radius: 3px;">light gray</span>. **Bold** and <u style="font-weight: bold;">underlined</u> values indicate the best and second-best results, respectively.
+        </p>
+    </div>
+</div>

@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+
+
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=dev  ice-width, initial-scale=1">
+
+  <!-- Primary Meta Tags -->
+  <!-- TODO: Replace with your paper title and author names -->
+  <meta name="title"
+    content="DGMapping: Degeneration-Guided Adaptive Multi-Sensor Fusion for Cost-Effective Mapping - Yu Liu">
+  <!-- TODO: Write a compelling 150-160 character description of your research -->
+  <meta name="description"
+    content="2D LiDAR is widely employed for map construction due to its cost-effectiveness and reliable measurements. However, its inherent limitation of single-plane scanning constrains the dimensionality and scale of the observed data, resulting in degeneration caused by insufficient geometric constraints. Although LiDAR-inertial fusion enhances mapping by compensating for LiDAR degeneration through motion correction, it struggles with accumulating sensor errors and fails to capture comprehensive 3D structural information. In this paper, we focus on enhancing environmental data utilization, refining the observation model, and integrating 3D structural information to improve mapping quality, rather than relying solely on low-precision motion compensation. We introduce DGMapping, a cost-effective multi-sensor fusion framework that follows a standardized process from joint probabilistic model construction to optimization. During the model construction phase, we incorporate a sampling-optimized fusion observation model to improve the efficiency and completeness of environmental data utilization. Additionally, we further refine the scene degeneration description to enhance the adaptive optimization of the joint probabilistic model. Experimental results across six real-world scenarios demonstrate that DGMapping outperforms existing algorithms in terms of odometry and mapping performance.">
+  <!-- TODO: Add 5-10 relevant keywords for your research area -->
+  <meta name="keywords"
+    content="Multi-sensor fusion, occupancy grid map, degeneration description, degeneration handling">
+  <!-- TODO: List all authors -->
+  <meta name="author" content="Yu Liu, Zhongyu Li, Meiqi Zhou, Zipei Fan, Guanyuan Feng">
+  <meta name="robots" content="index, follow">
+  <meta name="language" content="English">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="article">
+  <!-- TODO: Replace with your institution or lab name -->
+  <meta property="og:site_name" content="School of Artificial Intelligence Jilin University">
+  <!-- TODO: Same as paper title above -->
+  <meta property="og:title"
+    content="DGMapping: Degeneration-Guided Adaptive Multi-Sensor Fusion for Cost-Effective Mapping - Yu Liu">
+  <!-- TODO: Same as description above -->
+  <meta property="og:description"
+    content="2D LiDAR is widely employed for map construction due to its cost-effectiveness and reliable measurements. However, its inherent limitation of single-plane scanning constrains the dimensionality and scale of the observed data, resulting in degeneration caused by insufficient geometric constraints. Although LiDAR-inertial fusion enhances mapping by compensating for LiDAR degeneration through motion correction, it struggles with accumulating sensor errors and fails to capture comprehensive 3D structural information. In this paper, we focus on enhancing environmental data utilization, refining the observation model, and integrating 3D structural information to improve mapping quality, rather than relying solely on low-precision motion compensation. We introduce DGMapping, a cost-effective multi-sensor fusion framework that follows a standardized process from joint probabilistic model construction to optimization. During the model construction phase, we incorporate a sampling-optimized fusion observation model to improve the efficiency and completeness of environmental data utilization. Additionally, we further refine the scene degeneration description to enhance the adaptive optimization of the joint probabilistic model. Experimental results across six real-world scenarios demonstrate that DGMapping outperforms existing algorithms in terms of odometry and mapping performance.">
+  <!-- TODO: Replace with your actual website URL -->
+  <meta property="og:url" content="https://rainyrobo.github.io/DGMapping">
+  <!-- TODO: Create a 1200x630px preview image and update path -->
+  <meta property="og:image" content="https://YOUR_DOMAIN.com/static/images/social_preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="PAPER_TITLE - Research Preview">
+  <!-- <meta property="article:published_time" content="2024-01-01T00:00:00.000Z">
+  <meta property="article:author" content="FIRST_AUTHOR_NAME">
+  <meta property="article:section" content="Research">
+  <meta property="article:tag" content="KEYWORD1">
+  <meta property="article:tag" content="KEYWORD2"> -->
+
+  <!-- Twitter -->
+  <!-- <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@YOUR_TWITTER_HANDLE">
+  <meta name="twitter:creator" content="@AUTHOR_TWITTER_HANDLE">
+  <meta name="twitter:title" content="PAPER_TITLE">
+  <meta name="twitter:description" content="BRIEF_DESCRIPTION_OF_YOUR_RESEARCH_CONTRIBUTION_AND_FINDINGS">
+  <meta name="twitter:image" content="https://YOUR_DOMAIN.com/static/images/social_preview.png">
+  <meta name="twitter:image:alt" content="PAPER_TITLE - Research Preview"> -->
+
+  <!-- Academic/Research Specific -->
+  <!-- <meta name="citation_title" content="PAPER_TITLE">
+  <meta name="citation_author" content="FIRST_AUTHOR_LAST, FIRST_AUTHOR_FIRST">
+  <meta name="citation_author" content="SECOND_AUTHOR_LAST, SECOND_AUTHOR_FIRST">
+  <meta name="citation_publication_date" content="2024">
+  <meta name="citation_conference_title" content="CONFERENCE_NAME">
+  <meta name="citation_pdf_url" content="https://YOUR_DOMAIN.com/static/pdfs/paper.pdf"> -->
+
+  <!-- Additional SEO -->
+  <meta name="theme-color" content="#2563eb">
+  <meta name="msapplication-TileColor" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://ajax.googleapis.com">
+  <!-- <link rel="preconnect" href="https://documentcloud.adobe.com"> -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+
+  <!-- TODO: Replace with your paper title and authors -->
+  <title>DGMapping: Degeneration-Guided Adaptive Multi-Sensor Fusion for Cost-Effective Mapping</title>
+
+  <!-- Favicon and App Icons -->
+  <!-- Default browser favicon will be used -->
+
+  <!-- Critical CSS - Load synchronously -->
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <!-- Non-critical CSS - Load asynchronously -->
+  <link rel="preload" href="static/css/bulma-carousel.min.css" as="style"
+    onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="static/css/bulma-slider.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="static/css/fontawesome.all.min.css" as="style"
+    onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css" as="style"
+    onload="this.onload=null;this.rel='stylesheet'">
+
+  <!-- Fallback for browsers that don't support preload -->
+  <noscript>
+    <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+    <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+    <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  </noscript>
+
+  <!-- Fonts - Optimized loading -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Defer non-critical JavaScript -->
+  <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <!-- <script defer src="https://documentcloud.adobe.com/view-sdk/main.js"></script> -->
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script defer src="static/js/bulma-carousel.min.js"></script>
+  <script defer src="static/js/bulma-slider.min.js"></script>
+  <script defer src="static/js/index.js"></script>
+
+  <!-- Structured Data for Academic Papers -->
+  <!-- <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    "headline": "PAPER_TITLE",
+    "description": "BRIEF_DESCRIPTION_OF_YOUR_RESEARCH_CONTRIBUTION_AND_FINDINGS",
+    "author": [
+      {
+        "@type": "Person",
+        "name": "FIRST_AUTHOR_NAME",
+        "affiliation": {
+          "@type": "Organization",
+          "name": "INSTITUTION_NAME"
+        }
+      },
+      {
+        "@type": "Person",
+        "name": "SECOND_AUTHOR_NAME",
+        "affiliation": {
+          "@type": "Organization",
+          "name": "INSTITUTION_NAME"
+        }
+      }
+    ],
+    "datePublished": "2024-01-01",
+    "publisher": {
+      "@type": "Organization",
+      "name": "CONFERENCE_OR_JOURNAL_NAME"
+    },
+    "url": "https://YOUR_DOMAIN.com/YOUR_PROJECT_PAGE",
+    "image": "https://YOUR_DOMAIN.com/static/images/social_preview.png",
+    "keywords": ["KEYWORD1", "KEYWORD2", "KEYWORD3", "machine learning", "computer vision"],
+    "abstract": "FULL_ABSTRACT_TEXT_HERE",
+    "citation": "BIBTEX_CITATION_HERE",
+    "isAccessibleForFree": true,
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "mainEntity": {
+      "@type": "WebPage",
+      "@id": "https://YOUR_DOMAIN.com/YOUR_PROJECT_PAGE"
+    },
+    "about": [
+      {
+        "@type": "Thing",
+        "name": "RESEARCH_AREA_1"
+      },
+      {
+        "@type": "Thing", 
+        "name": "RESEARCH_AREA_2"
+      }
+    ]
+  }
+  </script> -->
+
+  <!-- Website/Organization Structured Data -->
+  <!-- <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "INSTITUTION_OR_LAB_NAME",
+    "url": "https://YOUR_INSTITUTION_WEBSITE.com",
+    "logo": "https://YOUR_DOMAIN.com/static/images/favicon.ico",
+    "sameAs": [
+      "https://twitter.com/YOUR_TWITTER_HANDLE",
+      "https://github.com/YOUR_GITHUB_USERNAME"
+    ]
+  }
+  </script> -->
+</head>
+
+<body>
+
+
+  <!-- Scroll to Top Button -->
+  <button class="scroll-to-top" onclick="scrollToTop()" title="Scroll to top" aria-label="Scroll to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
+  <main id="main-content">
+    <section class="hero">
+      <div class="hero-body">
+        <div class="container is-max-desktop">
+          <div class="columns is-centered">
+            <div class="column has-text-centered">
+              <!-- TODO: Replace with your paper title -->
+              <h1 class="title is-1 publication-title">DGMapping: Degeneration-Guided Adaptive Multi-Sensor Fusion for
+                Cost-Effective Mapping</h1>
+              <div class="is-size-5 publication-authors">
+                <!-- TODO: Replace with your paper authors and their personal links -->
+                <span class="author-block">
+                  <a href="https://RainyRobo.github.io" target="_blank">Yu Liu</a><sup>1</sup>,
+                </span>
+                <span class="author-block">
+                  <a href="#">Zhongyu Li</a><sup>2</sup>,
+                </span>
+                <span class="author-block">
+                  <a href="#">Meiqi Zhou</a><sup>2</sup>,
+                </span>
+                <span class="author-block">
+                  <a href="https://fanzipei.github.io/" target="_blank">Zipei Fan</a><sup>1</sup>,
+                </span>
+                <span class="author-block">
+                  <a href="#">Guanyuan Feng</a><sup>2*</sup>
+                </span>
+              </div>
+
+              <div class="is-size-5 publication-authors">
+                <!-- TODO: Replace with your institution and conference/journal info -->
+                <span class="author-block">
+                  <sup>1</sup>Jilin University&nbsp;&nbsp;&nbsp;
+                  <sup>2</sup>Changchun University of Science and Technology
+                </span>
+                <!-- TODO: Remove this line if no equal contribution -->
+                <!-- <span class="eql-cntrb"><small><br><sup>†</sup>Indicates Equal Contribution</small></span> -->
+              </div>
+
+              <div class="column has-text-centered">
+                <div class="publication-links">
+                  <!-- TODO: Update with your arXiv paper ID -->
+                  <span class="link-block">
+                    <a href="https://arxiv.org/pdf/<ARXIV PAPER ID>.pdf" target="_blank"
+                      class="external-link button is-normal is-rounded is-dark">
+                      <span class="icon">
+                        <i class="fas fa-file-pdf"></i>
+                      </span>
+                      <span>Paper - Coming Soon...</span>
+                    </a>
+                  </span>
+
+                  <!-- TODO: Add your supplementary material PDF or remove this section -->
+                  <!-- <span class="link-block">
+                    <a href="static/pdfs/supplementary_material.pdf" target="_blank"
+                      class="external-link button is-normal is-rounded is-dark">
+                      <span class="icon">
+                        <i class="fas fa-file-pdf"></i>
+                      </span>
+                      <span>Supplementary</span>
+                    </a>
+                  </span> -->
+
+                  <!-- TODO: Replace with your GitHub repository URL -->
+                  <span class="link-block">
+                    <a href="https://github.com/RainyRobo/DGMapping" target="_blank"
+                      class="external-link button is-normal is-rounded is-dark">
+                      <span class="icon">
+                        <i class="fab fa-github"></i>
+                      </span>
+                      <span>Code</span>
+                    </a>
+                  </span>
+
+                  <!-- TODO: Replace with your Hugging Face dataset URL -->
+                  <span class="link-block">
+                    <a href="https://huggingface.co/datasets/YOUR_USERNAME/YOUR_DATASET" target="_blank"
+                      class="external-link button is-normal is-rounded is-dark">
+
+                      <span class="icon" style="vertical-align: middle; font-size: 20px;">🤗</span>
+                      <!-- <span class="icon">
+                        <img src="static/images/huggingface_logo.svg" alt="Hugging Face" style="height: 1em; vertical-align: middle;">
+                      </span> -->
+                      <span>Dataset</span>
+                    </a>
+                  </span>
+
+                  <!-- TODO: Update with your arXiv paper ID -->
+                  <!-- <span class="link-block">
+                    <a href="https://arxiv.org/abs/<ARXIV PAPER ID>" target="_blank"
+                      class="external-link button is-normal is-rounded is-dark">
+                      <span class="icon">
+                        <i class="ai ai-arxiv"></i>
+                      </span>
+                      <span>arXiv</span>
+                    </a>
+                  </span> -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Teaser Figure -->
+    <section class="hero teaser">
+      <div class="container is-max-desktop">
+        <div class="hero-body">
+          <div class="has-text-centered">
+            <img src="static/images/teaser_figure.png" alt="DGMapping Framework" style="width: 90%; height: auto;">
+          </div>
+          <div class="content has-text-justified mt-4">
+            <p class="is-size-6">
+              <strong>Introduction:</strong> DGMapping receives input data from multiple sensors and follows the proposed standardized process: 1) constructing a probabilistic model to determine the probability distribution of candidate states for each sensor; 2) identifying scene degeneration categories and constructing scene degeneration descriptors; 3) adaptively building a joint probabilistic model. As a result, DGMapping enables real-time optimal state estimation and constructs a high-precision 2D grid map, enhanced with compensatory 3D structural information.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+
+
+    <!-- Paper abstract -->
+    <section class="section hero is-light">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <h2 class="title is-3">Abstract</h2>
+            <div class="content has-text-justified">
+              <!-- TODO: Replace with your paper abstract -->
+              <p>
+                2D LiDAR is widely employed for map construction due to its cost-effectiveness and reliable measurements. However, its inherent limitation of single-plane scanning constrains the dimensionality and scale of the observed data, resulting in degeneration caused by insufficient geometric constraints. Although LiDAR-inertial fusion enhances mapping by compensating for LiDAR degeneration through motion correction, it struggles with accumulating sensor errors and fails to capture comprehensive 3D structural information. 
+                In this paper, we focus on enhancing environmental data utilization, refining the observation model, and integrating 3D structural information to improve mapping quality, rather than relying solely on low-precision motion compensation. We introduce DGMapping, a cost-effective multi-sensor fusion framework that follows a standardized process from joint probabilistic model construction to optimization. During the model construction phase, we incorporate a sampling-optimized fusion observation model to improve the efficiency and completeness of environmental data utilization. Additionally, we further refine the scene degeneration description to enhance the adaptive optimization of the joint probabilistic model. Experimental results across six real-world scenarios demonstrate that DGMapping outperforms existing algorithms in terms of odometry and mapping performance.
+              </p>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- End paper abstract -->
+
+
+    <!-- Framework -->
+    <section class="hero teaser">
+      <div class="container is-max-desktop">
+        <div class="hero-body">
+          <h2 class="title is-3 has-text-centered mb-5">Framework</h2>
+          <img src="static/images/framework.png" alt="DGMapping Framework" style="width: 100%; height: auto;">
+          <div class="content has-text-justified mt-4">
+            <p class="is-size-6">
+              <strong>The overall framework of DGMapping.</strong> DGMapping integrates data from an RGB-D camera and a 2D LiDAR via a sampling optimization strategy to construct a fused observation model. Subsequently, scene degeneration types are characterized using both LiDAR and fused observations. These degeneration descriptions guide the adaptive adjustment of the joint probability model, enabling real-time optimal state estimation.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <!-- Experiment setup  -->
+    <section class="hero teaser">
+      <div class="container is-max-desktop">
+        <div class="hero-body">
+          <h2 class="title is-3 has-text-centered mb-5">Experimental Setup</h2>
+          <img src="static/images/Experimental_Setup.png" alt="DGMapping Framework" style="width: 100%; height: auto;">
+          <div class="content has-text-justified mt-4">
+            <p class="is-size-6">
+              <strong>Overview of real-world experiments.</strong>
+               Left: The mobile platform equipped with a sensor suite comprising an RGB-D camera, a 3D LiDAR, a 2D LiDAR, and an IMU. Right: The experimental scenarios covered in our dataset, categorized into General Environments and Degraded Environments, each containing three representative scenes. All 2D grid maps shown are constructed using our proposed DGMapping.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!--table-->
+    
+     <section class="section" id="results-section">
+  <div class="container is-max-widescreen">
+      <h2 class="title is-3 has-text-centered mb-5">Quantitative Results Comparison</h2>
+
+      <div class="tabs is-centered is-boxed">
+          <ul>
+              <li class="is-active" data-target="table-1-content">
+                  <a>
+                      <span class="icon is-small"><i class="fas fa-table" aria-hidden="true"></i></span>
+                      <span>Odometry Accuracy in Degenerate Environments</span>
+                  </a>
+              </li>
+              <li data-target="table-2-content">
+                  <a>
+                      <span class="icon is-small"><i class="fas fa-table" aria-hidden="true"></i></span>
+                      <span>Odometry Accuracy in General Environments</span>
+                  </a>
+              </li>
+          </ul>
+      </div>
+
+      <div id="tabs-content">
+          <div id="table-1-content" class="tab-content">
+              <div class="content">
+                  <div class="table-container">
+                      <table class="table is-bordered is-striped is-narrow is-fullwidth" id="degraded-scenarios-table">
+                          <thead>
+                              <tr>
+                                  <th colspan="15" class="has-text-centered is-size-6" style="border-left: none; border-right: none; padding-top: 1em; padding-bottom: 1em; background-color: #f5f5f5;">
+                                      TABLE I: Quantitative evaluation of odometry performance in degenerate environments.
+                                  </th>
+                              </tr>
+                              <tr style="background-color: #f5f5f5;">
+                                  <th colspan="2" rowspan="3" style="vertical-align: middle; text-align: center; background-color: #f5f5f5;"><strong>Method</strong></th>
+                                  <th colspan="4" class="has-text-centered" style="background-color: #f5f5f5;">Geometric Degeneration</th>
+                                  <th colspan="4" class="has-text-centered" style="background-color: #f5f5f5;">Range Degeneration</th>
+                                  <th colspan="4" class="has-text-centered" style="background-color: #f5f5f5;">Planar Degeneration</th>
+                                  <th rowspan="3" style="vertical-align: middle; text-align: center; background-color: #f5f5f5;"><strong>Average CE ↓</strong></th>
+                              </tr>
+                              <tr style="background-color: #f5f5f5;">
+                                  <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5;">ATE [m] ↓</th>
+                                  <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5;">ARE [rad] ↓</th>
+                                  <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5; border-bottom: 1px solid #ddd;">ATE [m] ↓</th>
+                                  <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5; border-bottom: 1px solid #ddd;">ARE [rad] ↓</th>
+                                  <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5; border-bottom: 1px solid #ddd;">ATE [m] ↓</th>
+                                  <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5; border-bottom: 1px solid #ddd;">ARE [rad] ↓</th>
+                              </tr>
+                              <tr style="background-color: #f5f5f5;">
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                  <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                    
+                              <tr style="background-color: rgb(220, 238, 243);">
+                                  <td colspan="2">ORB-SLAM3</td>
+                                  <td>2.731</td><td>0.946</td><td>0.021</td><td>0.013</td>
+                                  <td>1.502</td><td>0.671</td><td>0.025</td><td>0.011</td>
+                                  <td>0.046</td><td>0.009</td><td>0.007</td><td>0.003</td>
+                                  <td>0.722</td>
+                              </tr>
+                              <tr style="background-color: white;">
+                                  <td colspan="2">Hector</td>
+                                  <td>13.535</td><td>5.292</td><td>0.027</td><td>0.013</td>
+                                  <td>12.357</td><td>6.469</td><td>0.117</td><td>0.063</td>
+                                  <td>5.582</td><td>2.136</td><td>0.021</td><td>0.012</td>
+                                  <td>6.328</td>
+                              </tr>
+                              <tr style="background-color: white;">
+                                  <td colspan="2">Karto</td>
+                                  <td>11.283</td><td>5.195</td><td>0.026</td><td>0.012</td>
+                                  <td>10.957</td><td>5.264</td><td>0.192</td><td>0.119</td>
+                                  <td>3.435</td><td>1.719</td><td>0.019</td><td>0.010</td>
+                                  <td>4.319</td>
+                              </tr>
+                              <tr style="background-color: white;">
+                                  <td rowspan="3" style="vertical-align: middle; text-align: center;">CSM</td>
+                                  <td>θ = 1.0</td>
+                                  <td>10.325</td><td>4.879</td><td>0.029</td><td>0.014</td>
+                                  <td>9.773</td><td>5.132</td><td>0.073</td><td>0.044</td>
+                                  <td>3.253</td><td>1.658</td><td>0.017</td><td>0.009</td>
+                                  <td>3.912</td>
+                              </tr>
+                              <tr style="background-color: white;">
+                                  <td>θ = 0.5</td>
+                                  <td>8.858</td><td>3.694</td><td>0.037</td><td>0.025</td>
+                                  <td>6.633</td><td>3.197</td><td>0.168</td><td>0.095</td>
+                                  <td>1.146</td><td>0.732</td><td>0.028</td><td>0.019</td>
+                                  <td>2.812</td>
+                              </tr>
+                              <tr style="background-color: white;">
+                                  <td>θ = 0.1</td>
+                                  <td>5.222</td><td>1.941</td><td>0.084</td><td>0.052</td>
+                                  <td>5.504</td><td>2.677</td><td>0.191</td><td>0.119</td>
+                                  <td>0.946</td><td>0.632</td><td>0.036</td><td>0.026</td>
+                                  <td>1.997</td>
+                              </tr>
+                              <tr style="background-color: white;">
+                                  <td colspan="2">Cartographer</td>
+                                  <td>4.231</td><td>1.289</td><td>0.027</td><td>0.014</td>
+                                  <td>3.643</td><td>1.912</td><td>0.085</td><td>0.036</td>
+                                  <td>0.930</td><td>0.293</td><td>0.029</td><td>0.017</td>
+                                  <td>1.490</td>
+                              </tr>
+                              <tr style="background-color: white;">
+                                  <td colspan="2">DN-CSM</td>
+                                  <td>3.038</td><td>1.136</td><td><u>0.015</u></td><td><u >0.008</u></td>
+                                  <td>3.044</td><td>1.573</td><td>0.035</td><td>0.017</td>
+                                  <td>0.913</td><td>0.597</td><td>0.032</td><td>0.021</td>
+                                  <td>1.180</td>
+                              </tr>
+                              <tr style="background-color: #ffe6e6;">
+                                  <td colspan="2">DGMapping (w/o)</td>
+                                  <td><u >2.135</u></td><td><u >0.994</u></td><td><strong style="color: #000;">0.013</strong></td><td><strong style="color: #000;">0.007</strong></td>
+                                  <td><u >2.802</u></td><td><u >1.307</u></td><td><u>0.033</u></td><td><u>0.016</u></td>
+                                  <td><u >0.441</u></td><td><u >0.206</u></td><td><u >0.025</u></td><td><u >0.014</u></td>
+                                  <td><u >0.908</u></td>
+                              </tr>
+                              <tr style="background-color: #ffe6e6;">
+                                  <td colspan="2"><strong>DGMapping (ours)</strong></td>
+                                  <td><strong style="color: #000;">1.997</strong></td><td><strong style="color: #000;">0.841</strong></td><td><strong style="color: #000;">0.013</strong></td><td><strong style="color: #000;">0.007</strong></td>
+                                  <td><strong style="color: #000;">2.541</strong></td><td><strong style="color: #000;">1.151</strong></td><td><strong style="color: #000;">0.032</strong></td><td><strong style="color: #000;">0.015</strong></td>
+                                  <td><strong style="color: #000;">0.184</strong></td><td><strong style="color: #000;">0.080</strong></td><td><strong style="color: #000;">0.011</strong></td><td><strong style="color: #000;">0.006</strong></td>
+                                  <td><strong style="color: #000;">0.796</strong></td>
+                              </tr>
+                          </tbody>
+                      </table>
+                      </div>
+                  <p class="is-size-7 mt-3">
+                      <span class="has-text-weight-semibold">Notes:</span> The Absolute Trajectory Error (ATE, m) and Absolute Rotational Error (ARE, rad) are reported. The proposed method is highlighted in <span style="background-color: #ffe6e6; padding: 2px 5px; border-radius: 3px;">red</span>, and the visual reference is shaded in <span style="background-color: rgb(220, 238, 243); padding: 2px 5px; border-radius: 3px;">blue</span>. <strong>Bold</strong> and <u>underlined</u> values indicate the best and second-best results, respectively.
+                  </p>                                                     
+              </div>
+          </div>
+
+          <div id="tabs-content">
+            <div id="table-2-content" class="tab-content">
+                <div class="content">
+                    <div class="table-container">
+                        <table class="table is-bordered is-striped is-narrow is-fullwidth" id="general-environments-table">
+                            <thead>
+                                <tr>
+                                    <th colspan="15" class="has-text-centered is-size-6" style="border-left: none; border-right: none; padding-top: 1em; padding-bottom: 1em; background-color: #f5f5f5;">
+                                        TABLE II: Quantitative evaluation of odometry performance in general environments.
+                                    </th>
+                                </tr>
+                                <tr style="background-color: #f5f5f5;">
+                                    <th colspan="2" rowspan="3" style="vertical-align: middle; text-align: center; background-color: #f5f5f5;"><strong>Method</strong></th>
+                                    <th colspan="4" class="has-text-centered" style="background-color: #f5f5f5;">Science Building</th>
+                                    <th colspan="4" class="has-text-centered" style="background-color: #f5f5f5;">Laboratory</th>
+                                    <th colspan="4" class="has-text-centered" style="background-color: #f5f5f5;">Training Center</th>
+                                    <th rowspan="3" style="vertical-align: middle; text-align: center; background-color: #f5f5f5;"><strong>Average CE ↓</strong></th>
+                                </tr>
+                                <tr style="background-color: #f5f5f5;">
+                                    <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5;">ATE [m] ↓</th>
+                                    <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5;">ARE [rad] ↓</th>
+                                    <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5; border-bottom: 1px solid #ddd;">ATE [m] ↓</th>
+                                    <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5; border-bottom: 1px solid #ddd;">ARE [rad] ↓</th>
+                                    <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5; border-bottom: 1px solid #ddd;">ATE [m] ↓</th>
+                                    <th colspan="2" class="has-text-centered" style="background-color: #f5f5f5; border-bottom: 1px solid #ddd;">ARE [rad] ↓</th>
+                                </tr>
+                                <tr style="background-color: #f5f5f5;">
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">RMSE</th>
+                                    <th class="has-text-centered" style="background-color: #f5f5f5;">STD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="background-color: white;">
+                                    <td colspan="2">ORB-SLAM3</td>
+                                    <td><u>0.320</u></td><td><strong style="color: #000;">0.119</strong></td><td><u >0.020</u></td><td><strong style="color: #000;">0.009</strong></td>
+                                    <td>2.392</td><td><u >0.814</u></td><td>0.073</td><td>0.046</td>
+                                    <td>0.446</td><td>0.043</td><td>0.025</td><td>0.015</td>
+                                    <td>0.546</td>
+                                </tr>
+                                <tr style="background-color: white;">
+                                    <td colspan="2">Hector</td>
+                                    <td>5.242</td><td>2.207</td><td>0.021</td><td>0.013</td>
+                                    <td>13.665</td><td>6.078</td><td>0.069</td><td>0.046</td>
+                                    <td>1.173</td><td>0.597</td><td>0.023</td><td>0.016</td>
+                                    <td>3.366</td>
+                                </tr>
+                                <tr style="background-color: white;">
+                                    <td colspan="2">Karto</td>
+                                    <td>4.152</td><td>1.623</td><td>0.025</td><td>0.014</td>
+                                    <td>5.783</td><td>3.019</td><td>0.129</td><td>0.084</td>
+                                    <td>1.132</td><td>0.511</td><td>0.021</td><td><u >0.011</u></td>
+                                    <td>1.873</td>
+                                </tr>
+                                <tr style="background-color: white;">
+                                    <td rowspan="3" style="vertical-align: middle; text-align: center;">CSM</td>
+                                    <td>θ = 1.0</td>
+                                    <td>4.543</td><td>1.838</td><td>0.022</td><td>0.013</td>
+                                    <td>7.731</td><td>3.635</td><td>0.085</td><td>0.067</td>
+                                    <td>0.224</td><td>0.104</td><td>0.021</td><td><u >0.011</u></td>
+                                    <td>2.104</td>
+                                </tr>
+                                <tr style="background-color: white;">
+                                    <td>θ = 0.5</td>
+                                    <td>3.486</td><td>1.502</td><td>0.026</td><td>0.015</td>
+                                    <td>6.244</td><td>3.156</td><td>0.093</td><td>0.075</td>
+                                    <td>0.961</td><td>0.439</td><td>0.027</td><td>0.018</td>
+                                    <td>1.806</td>
+                                </tr>
+                                <tr style="background-color: white;">
+                                    <td>θ = 0.1</td>
+                                    <td>3.015</td><td>1.094</td><td>0.037</td><td>0.021</td>
+                                    <td>5.551</td><td>2.957</td><td>0.137</td><td>0.098</td>
+                                    <td>1.266</td><td>0.611</td><td>0.034</td><td>0.021</td>
+                                    <td>1.673</td>
+                                </tr>
+                                <tr style="background-color: white;">
+                                    <td colspan="2">Cartographer</td>
+                                    <td>1.845</td><td>0.719</td><td>0.022</td><td>0.011</td>
+                                    <td>2.619</td><td>0.948</td><td>0.099</td><td>0.051</td>
+                                    <td>0.211</td><td>0.099</td><td>0.020</td><td><u >0.011</u></td>
+                                    <td>0.802</td>
+                                </tr>
+                                <tr style="background-color: white;">
+                                    <td colspan="2">DN-CSM</td>
+                                    <td>0.446</td><td><u >0.141</u></td><td>0.021</td><td>0.012</td>
+                                    <td>2.508</td><td>0.884</td><td>0.069</td><td><u >0.044</u></td>
+                                    <td>0.206</td><td>0.105</td><td><u >0.019</u></td><td>0.012</td>
+                                    <td>0.545</td>
+                                </tr>
+                                <tr style="background-color: #ffe6e6;">
+                                    <td colspan="2">DGMapping (w/o)</td>
+                                    <td>0.327</td><td>0.146</td><td><u >0.020</u></td><td><u >0.011</u></td>
+                                    <td><u >1.936</u></td><td>0.891</td><td><u >0.068</u></td><td><u >0.044</u></td>
+                                    <td><u >0.199</u></td><td><u >0.097</u></td><td>0.020</td><td>0.013</td>
+                                    <td><u >0.428</u></td>
+                                </tr>
+                                <tr style="background-color: #ffe6e6;">
+                                    <td colspan="2"><strong>DGMapping (ours)</strong></td>
+                                    <td><strong style="color: #000;">0.307</strong></td><td>0.148</td><td><strong style="color: #000;">0.019</strong></td><td><u >0.011</u></td>
+                                    <td><strong style="color: #000;">1.617</strong></td><td><strong style="color: #000;">0.721</strong></td><td><strong style="color: #000;">0.067</strong></td><td><strong style="color: #000;">0.043</strong></td>
+                                    <td><strong style="color: #000;">0.173</strong></td><td><strong style="color: #000;">0.069</strong></td><td><strong style="color: #000;">0.016</strong></td><td><strong style="color: #000;">0.010</strong></td>
+                                    <td><strong style="color: #000;">0.367</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="is-size-7 mt-3">
+                        <span class="has-text-weight-semibold">Notes:</span> The Absolute Trajectory Error (ATE, m) and Absolute Rotational Error (ARE, rad) are reported. The proposed method is highlighted in <span style="background-color: #ffe6e6; padding: 2px 5px; border-radius: 3px;">red</span>. <strong>Bold</strong> and <u style=>underlined</u> values indicate the best and second-best results, respectively.
+                    </p> 
+                </div>
+            </div>
+        </div>
+</section>
+
+
+<!-- mapping result -->
+<section class="section" id="mapping-results">
+  <div class="container is-max-desktop">
+    <div class="content">
+      <h2 class="title is-3 has-text-centered mb-5">Mapping Results</h2>
+      
+      <div class="mapping-results-container">
+        <div class="scene-titles has-text-centered mb-4">
+          <span class="scene-title is-size-6 has-text-weight-semibold" style="display: inline-block; width: 45%; margin: 0 1%;">
+            Technology Building
+          </span>
+          <span class="scene-title is-size-6 has-text-weight-semibold" style="display: inline-block; width: 45%; margin: 0 1%;">
+            Corridors
+          </span>
+        </div>
+        
+        <div class="top-images has-text-centered mb-2">
+          <div class="columns is-mobile is-centered">
+            <div class="column is-half-mobile is-6-tablet is-6-desktop">
+              <div class="image-container">
+                <img src="static/images/mapping-1312S-1.png" 
+                     alt="Technology Building Overview" 
+                     class="experiment-image" 
+                     style="width: 100%; height: auto;">
+              </div>
+            </div>
+            <div class="column is-half-mobile is-6-tablet is-6-desktop">
+              <div class="image-container">
+                <img src="static/images/mapping-13CS-1.png" 
+                     alt="Corridors Overview" 
+                     class="experiment-image" 
+                     style="width: 100%; height: auto;">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bottom-images has-text-centered">
+          <div class="columns is-mobile is-centered">
+            <div class="column is-3-mobile is-3-tablet is-3-desktop">
+              <div class="image-container">
+                <img src="static/images/mapping-1312r1-1.png" 
+                     alt="Technology Building - DGMapping" 
+                     class="experiment-image" 
+                     style="width: 100%; height: auto;">
+                <p class="is-size-7 has-text-centered mt-1">
+                  DGMapping (ours)
+                </p>
+              </div>
+            </div>
+            <div class="column is-3-mobile is-3-tablet is-3-desktop">
+              <div class="image-container">
+                <img src="static/images/mapping-1312r2-1.png" 
+                     alt="Technology Building - DN-CSM" 
+                     class="experiment-image" 
+                     style="width: 100%; height: auto;">
+                <p class="is-size-7 has-text-centered mt-1">
+                  DN-CSM
+                </p>
+              </div>
+            </div>
+            
+            <div class="column is-3-mobile is-3-tablet is-3-desktop">
+              <div class="image-container">
+                <img src="static/images/mapping-13Cr1-1.png" 
+                     alt="Corridors - DGMapping" 
+                     class="experiment-image" 
+                     style="width: 100%; height: auto;">
+                <p class="is-size-7 has-text-centered mt-1">
+                  DGMapping (ours)
+                </p>
+              </div>
+            </div>
+            <div class="column is-3-mobile is-3-tablet is-3-desktop">
+              <div class="image-container">
+                <img src="static/images/mapping-13Cr2-1.png" 
+                     alt="Corridors - DN-CSM" 
+                     class="experiment-image" 
+                     style="width: 100%; height: auto;">
+                <p class="is-size-7 has-text-centered mt-1">
+                  DN-CSM
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="has-text-centered mt-5">
+          <p class="is-size-6 has-text-justified">
+            <strong>Mapping results for Tech Tower and corridor scenes.</strong> The top row displays the scene overviews, while the bottom row compares the mapping outcomes of DGMapping and DN-CSM. Images are cropped for clarity.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- cost plot -->
+<section class="section" id="efficiency-results">
+  <div class="container is-max-widescreen">
+    <div class="content">
+      <div class="has-text-centered mb-5">
+        <h2 class="title is-3">Efficiency & Cost Analysis</h2>
+        <p class="subtitle is-6 has-text-grey mt-2">
+          Comprehensive analysis of memory usage, CPU utilization, runtime, and SWaP-C metrics
+        </p>
+      </div>
+      
+      <div class="efficiency-results-container">
+        <div class="columns is-centered mb-5">
+          
+          <div class="column is-4">
+            <div class="efficiency-image-container">
+              <img src="static/images/Memory_Usage-1.png" 
+                   alt="Memory Footprint Monitoring" 
+                   class="efficiency-image"
+                   style="width: 100%; height: auto;">
+              <div class="image-label has-text-centered mt-2">
+                <span class="tag is-info is-light is-size-7">(a) Memory footprint</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="column is-4">
+            <div class="efficiency-image-container">
+              <img src="static/images/CPU_Usage-1.png" 
+                   alt="CPU Usage Statistics" 
+                   class="efficiency-image"
+                   style="width: 100%; height: auto;">
+              <div class="image-label has-text-centered mt-2">
+                <span class="tag is-info is-light is-size-7">(b) CPU usage</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="column is-4">
+            <div class="efficiency-image-container">
+              <img src="static/images/runtime-1.png" 
+                   alt="Runtime Analysis" 
+                   class="efficiency-image"
+                   style="width: 100%; height: auto;">
+              <div class="image-label has-text-centered mt-2">
+                <span class="tag is-info is-light is-size-7">(c) Runtime analysis</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="column is-4">
+            <div class="efficiency-image-container">
+              <img src="static/images/swap_c_mean_std_comparison-1.png" 
+                   alt="SWaP-C Metrics Comparison" 
+                   class="efficiency-image"
+                   style="width: 100%; height: auto;">
+              <div class="image-label has-text-centered mt-2">
+                <span class="tag is-info is-light is-size-7">(d) SWaP-C metrics</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="has-text-centered mt-5">
+          <p class="is-size-6 has-text-justified">
+            <strong>Computational efficiency and resource evaluation.</strong> 
+            (a) Memory footprint monitoring shows the memory consumption patterns of different algorithms. 
+            (b) CPU usage statistics demonstrate the computational load distribution. 
+            (c) Runtime analysis of system components highlights the time efficiency of each module. 
+            (d) Comprehensive SWaP-C (Size, Weight, Power, and Cost) metrics comparison against baselines.
+        </div>
+      
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+
+    <!-- Paper poster -->
+    <!-- <section class="hero is-small is-light">
+      <div class="hero-body">
+        <div class="container">
+          <h2 class="title">Poster</h2>
+
+          <iframe src="static/pdfs/sample.pdf" width="100%" height="550">
+          </iframe>
+
+        </div>
+      </div>
+    </section> -->
+    <!--End paper poster -->
+
+
+
+    <!--BibTex citation -->
+    <!-- <section class="section" id="BibTeX">
+      <div class="container is-max-desktop content">
+        <div class="bibtex-header">
+          <h2 class="title">BibTeX</h2>
+          <button class="copy-bibtex-btn" onclick="copyBibTeX()" title="Copy BibTeX to clipboard">
+            <i class="fas fa-copy"></i>
+            <span class="copy-text">Copy</span>
+          </button>
+        </div>
+        <pre id="bibtex-code"><code>@article{YourPaperKey2024,
+  title={Your Paper Title Here},
+  author={First Author and Second Author and Third Author},
+  journal={Conference/Journal Name},
+  year={2024},
+  url={https://your-domain.com/your-project-page}
+}</code></pre>
+      </div>
+    </section> -->
+    <!--End BibTex citation -->
+
+
+    <footer class="footer">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column is-8">
+            <div class="content">
+              <p>
+            This website refers to <a href="https://github.com/nerfies/nerfies.github.io">nerfies</a>, and
+            is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+            </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Statcounter tracking code -->
+
+    <!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
+
+    <!-- End of Statcounter Code -->
+
+</body>
+
+</html>
