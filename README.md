@@ -1,7 +1,7 @@
 # DGMapping: Degeneration-Guided Adaptive Multi-Sensor Fusion
 
 [![Project Page](https://img.shields.io/badge/Project-Page-green.svg)](https://rainyrobo.github.io/DGMapping/)
-[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-yellow.svg)](https://huggingface.co/)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-yellow.svg)](https://huggingface.co/datasets/RainyBot/DGMapping)
 [![Code License](https://img.shields.io/badge/Code%20License-Apache%202.0-green.svg)](LICENSE)
 [![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg)](LICENSE)
 
