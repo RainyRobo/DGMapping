@@ -1,0 +1,14 @@
+# Manuscript sources (not for public release)
+DGMapping_Manuscript_*.pdf
+manuscript.txt
+
+# Build artefacts
+build/
+*.o
+*.a
+*.so
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store
