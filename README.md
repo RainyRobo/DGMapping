@@ -1,310 +1,203 @@
-# DGMapping
+# DGMapping: Degeneration-Guided Adaptive Multi-Sensor Fusion
 
-**Degeneration-Guided Adaptive Multi-Sensor Fusion for Robust 2D LiDAR Mapping**
+[![Project Page](https://img.shields.io/badge/Project-Page-blue.svg)](https://rainyrobo.github.io/DGMapping/)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset-yellow.svg)](https://huggingface.co/datasets/RainyBot/DGMapping)
+[![Code License](https://img.shields.io/badge/code-Apache%202.0-blue.svg)](LICENSE)
+[![Data License](https://img.shields.io/badge/data-CC%20BY--NC%204.0-lightgrey.svg)](https://huggingface.co/datasets/RainyBot/DGMapping)
+[![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C.svg?logo=cplusplus&logoColor=white)](#3-build--demos)
+[![Core](https://img.shields.io/badge/core-header--only-success.svg)](include/dgmapping/)
 
-[![Project Page](https://img.shields.io/badge/Project-Page-green.svg)](https://rainyrobo.github.io/DGMapping/)
-[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-yellow.svg)](https://huggingface.co/datasets/RainyBot/DGMapping)
-[![Code License](https://img.shields.io/badge/Code%20License-Apache%202.0-green.svg)](LICENSE)
-[![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg)](LICENSE)
+Reference implementation of the DGMapping paper's algorithmic core:
+Sampling-Optimized ICP for RGB-D pseudo-LiDAR / 2D LiDAR fusion, an
+online degeneracy detector, and a degeneration-guided patch for
+Cartographer's 2D correlative scan matcher.
 
-DGMapping augments a Cartographer-style 2D LiDAR SLAM front-end with online
-**degeneracy detection** and **multi-sensor fusion**. When the geometry of
-the environment becomes ambiguous (long corridors, glass walls, sparse
-returns), the framework fuses the 2D LiDAR scan with a pseudo-LiDAR cloud
-extracted from an RGB-D camera and re-weights the scan-matching cost so that
-the optimisation falls back to motion priors along the degenerate direction.
+This release focuses on the reusable core modules and lightweight demos.
+Full system integration code is intentionally kept outside this repository
+for now.
 
-This repository contains the **reference implementation of the algorithmic
-core** of the paper. It is the same code that produced the numerical
-results reported in the manuscript.
+![DGMapping framework](framework.png)
 
----
+## 1. Directory Structure
 
-## 1. Scope of this release
+The repository is organised for modular use and straightforward
+integration with existing SLAM frameworks, especially Google
+Cartographer.
 
-DGMapping has two layers: an algorithmic core (formulae and data flow that
-define the method) and an engineering layer (ROS / Cartographer plumbing,
-recording tools, evaluation harness). **This open-source release covers the
-algorithmic core only.** The full engineering deployment will be made
-publicly available **upon the paper's formal acceptance**, which keeps the
-two artefacts in step and lets us land it together with the cleaned-up
-datasets.
-
-| Layer                                             | This release | Upon acceptance |
-|---------------------------------------------------|:------------:|:---------------:|
-| Sampling-Optimized ICP (`SoIcp`)                  |      ✅      |       ✅        |
-| Degeneracy detector (`DegeneracyDetector`)        |      ✅      |       ✅        |
-| Degeneration-guided 2D scan matcher patch         |      ✅      |       ✅        |
-| Standalone runnable demo (synthetic scene)        |      ✅      |       ✅        |
-| Full Cartographer integration (Bazel / Lua glue)  |              |       ✅        |
-| ROS / ROS 2 nodes and launch files                |              |       ✅        |
-| Docker images                                     |              |       ✅        |
-| Pre-processed datasets and evaluation scripts     |              |       ✅        |
-
-The three core modules in `include/dgmapping/` and `src/` are **complete
-and runnable today** — they are header-only (or single-translation-unit)
-C++17, depend only on Eigen 3, and ship with a self-contained reproducer
-(`src/so_icp_demo.cc`) that exercises the SO-ICP pipeline end-to-end on a
-synthetic scene with ground-truth pose and quantified outliers. See the
-[Validation](#5-validation) section below for the actual recovered
-numbers.
-
----
-
-## 2. Repository layout
-
-```text
+```
 DGMapping/
-├── include/dgmapping/
-│   ├── degeneracy_detector.h                    # Sec. III-C, Eqs. 5–12
-│   ├── so_icp.h                                 # Sec. III-B, Algorithm 1, Eqs. 3–4
-│   └── real_time_correlative_scan_matcher_2d.h  # Adaptive-fusion entry point
+├── cartographer/                                  # Placeholder for the upstream framework
+├── include/dgmapping/                             # [Core] degeneracy-aware fusion modules
+│   ├── so_icp.h                                   # Sampling-Optimized ICP (header-only)
+│   ├── degeneracy_detector.h                      # Degeneracy detection (header-only)
+│   └── real_time_correlative_scan_matcher_2d.h    # Adaptive fusion interface for degeneracy handling
 ├── src/
-│   ├── real_time_correlative_scan_matcher_2d.cc # Sec. III-D, Eqs. 13–17
-│   └── so_icp_demo.cc                           # Self-contained SO-ICP reproducer
-├── cartographer/                                # (placeholder for upstream submodule)
-└── README.md
+│   ├── so_icp_demo.cc                             # Standalone demo for SO-ICP
+│   ├── degeneracy_detector_demo.cc                # Standalone demo for the degeneracy detector
+│   └── real_time_correlative_scan_matcher_2d.cc   # Implementation of degeneration-aware CSM
+├── CMakeLists.txt
+└── LICENSE
 ```
 
-Both `degeneracy_detector.h` and `so_icp.h` are **header-only**; only the
-patched scan matcher requires linking against the rest of Cartographer (or
-any host code that already provides a `Grid2D` / `PointCloud` / `Rigid2d`
-implementation matching its signature).
+`so_icp.h` and `degeneracy_detector.h`, together with the two demos,
+depend only on **Eigen 3** and a **C++17** compiler. The patched
+`real_time_correlative_scan_matcher_2d.cc` is a drop-in replacement for
+the file of the same name in
+[Google Cartographer](https://github.com/cartographer-project/cartographer)
+and therefore requires the rest of Cartographer to compile; it is
+**not** built by default.
 
----
+## 2. Core API & Mathematical Formulation
 
-## 3. Algorithmic core
+The two header-only modules, `SoIcp` and `DegeneracyDetector`, implement
+the main algorithms described in the paper, while
+`RealTimeCorrelativeScanMatcher2D` exposes the degeneration-aware scan
+matching interface used for integration into Cartographer.
 
-### 3.1 Sampling-Optimized ICP (`SoIcp`)
+### 2.1 Degeneracy descriptors
 
-`SoIcp` implements Algorithm 1 of the paper. Given the pseudo-LiDAR cloud
-$P^D$ and the 2D LiDAR cloud $P^L$, every iteration:
+`DegeneracyDetector::DetectDegeneracy` returns a `DegeneracyResult`
+containing five descriptors corresponding to the paper's equations:
 
-1. **SAMPLING** — keep the $m = \lfloor N \cdot \eta \rfloor$ points of
-   $P^D$ with the smallest residual to $P^L$ under the current pose
-   (Eq. 3).
-2. **ESTIMATION** — solve the closed-form 2D rigid Procrustes problem on
-   the sampled subset (Eq. 4) via Kabsch–Umeyama SVD.
-3. **COMPUTEDISTANCE / RMSE** — refresh residuals over the full $P^D$.
-4. Accept the new pose if the RMSE strictly decreases; terminate
-   otherwise (the monotone-decrease criterion of the paper).
+| Code accessor      | Symbol  | Equation | Physical interpretation |
+|:-------------------|:-------:|:--------:|:------------------------|
+| `result.R_deg()`   | $R_{deg}$ | Eq. (7)  | Range degeneration       |
+| `result.G_deg`     | $G_{deg}$ | Eq. (12) | Geometric degeneration   |
+| `result.L_deg()`   | $L_{deg}$ | Eq. (8)  | LiDAR degeneration       |
+| `result.F_deg()`   | $F_{deg}$ | Eq. (9)  | Fusion degeneration      |
+| `result.phi()`     | $\varphi$ | Eq. (11) | Principal direction      |
 
-The overlap ratio $\eta$ can be supplied by the caller or auto-estimated
-from the initial pose. SO-ICP runs in $\mathcal{O}(N)$ per iteration
-thanks to a header-only 2D hash-grid index, requires only Eigen 3, and
-needs no external SVD/LAPACK dependency.
+`R_deg()`, `L_deg()`, `F_deg()`, and `phi()` are convenience accessors
+that mirror the arguments expected by the patched scan matcher.
 
-### 3.2 Degeneracy detector (`DegeneracyDetector`)
+### 2.2 Integration workflow
 
-The detector operates in four steps that map one-to-one to Sec. III-C of
-the paper:
+The snippet below illustrates a typical Scan-to-Map integration pattern
+using DGMapping. It is intended as an API-level example showing how the
+three components connect inside a larger SLAM pipeline.
 
-1. **Normal extraction** — voxel downsampling, K-NN normal estimation,
-   curvature-gated symmetrized PCA on the planar normal cloud (Eqs. 10–11)
-   to obtain the principal degeneration direction $\varphi$.
-2. **Range degeneration** — compares the number of valid normal features
-   to the LiDAR's expected sample count (Eqs. 5–6) to obtain $R^L_{deg}$,
-   $R^F_{deg}$ and $R_{deg}$ (Eq. 7).
-3. **Point-cloud degeneration** — combines the two range coefficients
-   into $L_{deg}$ (Eq. 8) and $F_{deg}$ (Eq. 9) with a Gaussian
-   cross-coupling controlled by $\sigma^2$.
-4. **Geometric degeneration** — rotates the planar normal cloud into the
-   $\varphi$-aligned frame and integrates the absolute coordinate ratio
-   to obtain $G_{deg}$ (Eq. 12).
+```cpp
+#include "dgmapping/so_icp.h"
+#include "dgmapping/degeneracy_detector.h"
+#include "cartographer/mapping/internal/2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
 
-Code-paper correspondence:
+using namespace cartographer::mapping::scan_matching;
 
-| Code                              | Symbol         | Equation | Meaning                              |
-|----------------------------------:|:--------------:|:--------:|:-------------------------------------|
-| `result.range_deg.R_deg_L`        | $R^L_{deg}$    | Eq. (5)  | LiDAR range degeneration             |
-| `result.range_deg.R_deg_F`        | $R^F_{deg}$    | Eq. (6)  | Fused range degeneration             |
-| `result.range_deg.R_deg`          | $R_{deg}$      | Eq. (7)  | Range degeneration                   |
-| `result.pc_deg.L_deg`             | $L_{deg}$      | Eq. (8)  | LiDAR-cloud degeneration             |
-| `result.pc_deg.F_deg`             | $F_{deg}$      | Eq. (9)  | Fused-cloud degeneration             |
-| `result.pc_deg.phi`               | $\varphi$      | Eq. (11) | Principal degeneration direction     |
-| `result.G_deg`                    | $G_{deg}$      | Eq. (12) | Geometric degeneration               |
+void RunDegeneracyGuidedMatching() {
+  // I. Data acquisition
+  std::vector<RangefinderPoint> raw_scan    = GetLidarScan();         // P^L
+  std::vector<RangefinderPoint> depth_cloud = GetCameraPseudoLidar(); // P^D
 
-Convenience accessors `result.R_deg()`, `result.L_deg()`, `result.F_deg()`,
-`result.phi()` mirror the symbols expected by the scan matcher signature.
+  // II. Sampling-Optimized ICP fusion (Sec. III-B, Algorithm 1)
+  SoIcp so_icp(SoIcpOptions{});
+  SoIcpResult align = so_icp.Align(depth_cloud, raw_scan);
+  auto fused_cloud =
+      BuildFusedObservation(raw_scan, depth_cloud, align);  // z^F_t
 
-### 3.3 Adaptive scan matcher (`RealTimeCorrelativeScanMatcher2D`)
+  // III. Degeneracy analysis (Sec. III-C, Eqs. 5-12)
+  DegeneracyDetector detector(DegeneracyDetectorOptions{});
+  auto deg = detector.DetectDegeneracy(raw_scan, fused_cloud);
 
-The patched matcher implements Algorithm 2 / Eqs. 13–17. Each candidate
-pose is scored by
+  // IV. State estimation (degeneration-guided CSM, Sec. III-D, Eqs. 13-17)
+  cartographer::transform::Rigid2d pose_estimate;
+  cartographer::transform::Rigid2d initial_pose =
+      cartographer::transform::Rigid2d::Translation({2.5, 2.5});
 
-$$ S \;=\; S^{L}_{obs}\ \cdot\ S^{F}_{obs}\ \cdot\ S_{mot}, $$
+  double score = real_time_correlative_scan_matcher_->Match(
+      initial_pose,
+      raw_scan,
+      *probability_grid,
+      &pose_estimate,
+      fused_cloud,           // visual constraints  z^F_t
+      deg.R_deg(),           // range degeneration weight
+      deg.G_deg,             // geometric degeneration weight
+      deg.L_deg(),           // LiDAR model penalty
+      deg.F_deg(),           // fusion model penalty
+      deg.phi());            // principal direction
+}
+```
 
-where
+## 3. Build & Demos
 
-- $S^{L}_{obs}$ (Eq. 13) and $S^{F}_{obs}$ (Eq. 14) are observation
-  scores driven by the discretised LiDAR scan and the SO-ICP-fused cloud,
-  weighted respectively by $1/L_{deg}$ and $1/F_{deg}$. They are
-  evaluated through the geometric mean of the per-point occupancy
-  probabilities to avoid floating-point underflow on dense scans (this
-  matches the convention of the DN-CSM reference cited by the paper and
-  is preserved exactly when the occupancy field is uniform).
-- $S_{mot}$ (Eq. 16) penalises pose deviations using both the range
-  weight $R_{deg}$ and the geometric weight $G_{deg}$, the latter
-  rotated into the $\varphi$ frame so that motion along the degenerate
-  axis is treated as low-cost.
+Two standalone demos are provided for quick algorithm-level validation.
 
----
+> **Note**
+> This release contains the core algorithmic modules and their standalone
+> demos. A full engineering deployment, including ROS integration,
+> Docker support, and launch files, will be released after the paper's
+> formal acceptance.
 
-## 4. Build and run
+### Prerequisites
 
-### 4.1 Prerequisites
-
-- C++17 compiler (GCC ≥ 9 or Clang ≥ 10)
-- [Eigen 3](https://eigen.tuxfamily.org/)
-- (Optional) [Cartographer](https://github.com/cartographer-project/cartographer)
-  if you want to drop the patched scan matcher into a full SLAM stack.
+- CMake ≥ 3.13
+- C++17-compatible compiler (GCC >= 9 / Clang >= 10 / MSVC 2019+)
+- Eigen 3
+- Cartographer (optional, only needed for the patched scan matcher)
 
 On Debian / Ubuntu:
 
 ```bash
-sudo apt-get install -y build-essential libeigen3-dev
+sudo apt-get install -y build-essential cmake libeigen3-dev
 ```
 
-### 4.2 Standalone SO-ICP demo
-
-`src/so_icp_demo.cc` is the recommended way to verify a fresh checkout.
-It synthesises an L-shaped indoor room, a 2D LiDAR scan with $\sigma\!\approx\!1\,$cm
-noise, and a misaligned pseudo-LiDAR cloud with $\sigma\!\approx\!2.5\,$cm
-noise plus 30 % camera-only outliers, then runs SO-ICP and prints the
-recovered SE(2) pose:
+### Build
 
 ```bash
-g++ -std=c++17 -O2 -I include -I /usr/include/eigen3 \
-    src/so_icp_demo.cc -o so_icp_demo
-./so_icp_demo
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
 ```
 
-### 4.3 End-to-end usage
+### Run
 
-The snippet below shows how the three modules compose into the full
-DGMapping pipeline of Sec. III-B / III-C / III-D:
-
-```cpp
-#include "dgmapping/degeneracy_detector.h"
-#include "dgmapping/so_icp.h"
-#include "cartographer/mapping/internal/2d/scan_matching/real_time_correlative_scan_matcher_2d.h"
-
-using cartographer::mapping::scan_matching::DegeneracyDetector;
-using cartographer::mapping::scan_matching::DegeneracyDetectorOptions;
-using cartographer::mapping::scan_matching::SoIcp;
-using cartographer::mapping::scan_matching::SoIcpOptions;
-using cartographer::mapping::scan_matching::BuildFusedObservation;
-
-void RunDegenerationGuidedMatching() {
-  // I. Acquire the two observations of the same scene.
-  const auto raw_scan     = GetLidarScan();          // P^L
-  const auto pseudo_lidar = GetCameraPseudoLidar();  // P^D
-
-  // II. Sampling-Optimized ICP fuses P^D into z^F_t (Sec. III-B).
-  SoIcpOptions so_icp_opt;
-  so_icp_opt.max_correspondence_distance = 0.4;
-  so_icp_opt.fov_overlap_ratio           = 0.0;  // 0 ⇒ auto-estimate η
-  SoIcp so_icp(so_icp_opt);
-  const auto align       = so_icp.Align(pseudo_lidar, raw_scan);
-  const auto fused_cloud = BuildFusedObservation(raw_scan, pseudo_lidar, align);
-
-  // III. Degeneracy descriptors (Sec. III-C, Eqs. 5–12).
-  DegeneracyDetector detector(DegeneracyDetectorOptions{});
-  const auto deg = detector.DetectDegeneracy(raw_scan, fused_cloud);
-
-  // IV. Degeneration-guided scan matching (Sec. III-D, Eqs. 13–17).
-  cartographer::transform::Rigid2d pose_estimate;
-  real_time_correlative_scan_matcher_->Match(
-      /*initial_pose=*/initial_pose,
-      raw_scan,
-      *probability_grid,
-      &pose_estimate,
-      fused_cloud,                       // z^F_t
-      deg.R_deg(), deg.G_deg, deg.L_deg(), deg.F_deg(), deg.phi());
-}
+```bash
+./build/so_icp_demo
+./build/degeneracy_detector_demo
 ```
 
----
+This generates two executables under `build/`:
 
-## 5. Validation
+- `build/so_icp_demo` runs SO-ICP on a synthetic 2D scene with simulated
+  noise and outliers, then prints the recovered transform.
+- `build/degeneracy_detector_demo` runs the detector on three synthetic
+  scenes (L-shaped room, long corridor, and sparse arc) and prints the
+  resulting descriptors for side-by-side inspection.
 
-Running `./so_icp_demo` on a 4-core desktop reproduces the following
-output (deterministic, seeded RNG):
+Both demos are deterministic (seeded RNG) and require no external data.
 
-```text
-Cloud sizes:  P^L = 646  P^D = 839 (with ~30% outliers)
-Ground-truth offset to recover:  yaw=8.000 deg  tx=0.300  ty=-0.200
+To additionally build the patched scan matcher, Cartographer must be
+discoverable via `find_package(cartographer)`:
 
-SO-ICP result:
-  iterations  : 40  (converged=false)
-  sample size m: 417 / 839
-  inliers kept : 417
-  RMSE        : 0.02085 m
-  recovered   : yaw=7.753 deg  tx=0.2770  ty=-0.1869
-  abs error   : dyaw=-0.247 deg  dtx=-0.0230  dty=0.0131
-
-Fused observation cloud z^F_t built: 1063 points
-  = 646 LiDAR + 417 inliers from P^D
+```bash
+cmake -S . -B build -DDGMAPPING_BUILD_SCAN_MATCHER=ON
 ```
 
-i.e. SO-ICP recovers the ground-truth SE(2) offset to better than
-**0.25° / 2.3 cm** under 30 % outliers and 2.5 cm-σ depth noise, and
-correctly identifies all 417 structurally consistent points (out of 839)
-to feed into the fused observation cloud $z^F_t$. The same reproducer
-is the canonical smoke test we use during development.
+To integrate DGMapping's patched matcher into your own Cartographer tree,
+see
+[`cartographer/README.md`](cartographer/README.md).
 
----
+## 4. Roadmap
 
-## 6. Roadmap
+This repository will continue to be maintained. The current release
+covers the core algorithmic modules and the minimal demo programs needed
+to verify them.
 
-We are committed to maintaining this repository.
+- [x] Initial release: `SoIcp`, `DegeneracyDetector`, the patched scan
+  matcher source, and two standalone demos
+- [ ] Full engineering deployment: Cartographer / ROS integration,
+  Docker image, dataset utilities, and a reproducibility kit
 
-- [x] **Initial release** — algorithmic core, header-only modules,
-      runnable SO-ICP reproducer.
-- [ ] **Full engineering deployment** — Cartographer integration glue,
-      ROS / ROS 2 nodes, Docker image, dataset preparation utilities.
-- [ ] **Reproducibility kit** — pre-processed sequences and evaluation
-      scripts that regenerate the tables and figures of the paper.
+## Acknowledgments
 
-The two pending items will land together with the camera-ready release.
+We gratefully acknowledge the open-source contribution of Google
+Cartographer, which provides the foundation for this implementation.
+DGMapping is built upon the
+[cartographer](https://github.com/cartographer-project/cartographer)
+repository.
 
----
+We strictly follow the **Apache 2.0 License** of the original project
+(see [`LICENSE`](LICENSE)). If you use this code, please also credit the
+original Cartographer authors:
 
-## 7. Citation
-
-If you use DGMapping in academic work, please cite the upstream
-Cartographer paper (this repository is built on top of it) and our
-manuscript (BibTeX placeholder, will be updated upon acceptance):
-
-```bibtex
-@inproceedings{hess2016cartographer,
-  title     = {Real-time loop closure in 2D LIDAR SLAM},
-  author    = {Hess, Wolfgang and Kohler, Damon and Rapp, Holger and Andor, Daniel},
-  booktitle = {IEEE International Conference on Robotics and Automation (ICRA)},
-  year      = {2016}
-}
-
-@misc{dgmapping2026,
-  title  = {{DGMapping}: Degeneration-Guided Adaptive Multi-Sensor Fusion for Robust 2D LiDAR Mapping},
-  author = {RainyBot},
-  year   = {2026},
-  note   = {Open-source reference implementation, manuscript under review}
-}
-```
-
----
-
-## 8. License and acknowledgments
-
-The DGMapping source code is released under the **Apache License 2.0**
-(see `LICENSE`). The accompanying datasets are released under
-**CC BY-NC 4.0**.
-
-This work is built on top of [Google
-Cartographer](https://github.com/cartographer-project/cartographer),
-itself released under Apache 2.0; we deeply appreciate the Cartographer
-authors for their high-quality open-source contribution. Any redistribution
-of this repository or its derivatives must preserve the original
-Cartographer copyright notices.
-
-Issues, suggestions and pull requests are welcome.
+> W. Hess, D. Kohler, H. Rapp, and D. Andor, "Real-time loop closure in
+> 2D LIDAR SLAM," in *IEEE International Conference on Robotics and
+> Automation (ICRA)*, 2016.

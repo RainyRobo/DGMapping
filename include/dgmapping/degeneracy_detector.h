@@ -414,6 +414,12 @@ class DegeneracyDetector {
     return out;
   }
 
+  // 2D normal estimation in the LiDAR scanning plane.  For each point we
+  // run a PCA on the xy projection of the K nearest neighbours; the
+  // eigenvector of the smaller eigenvalue is the in-plane normal.  This
+  // matches the assumption made by ExtractNormalFeatures (which only ever
+  // looks at the xy components of the normal) and avoids the degenerate
+  // ±z output produced by a 3D PCA on perfectly coplanar inputs.
   template <typename T>
   std::vector<detector_internal::PointWithNormal<T>> EstimateNormals(
       const std::vector<T>& points) const {
@@ -439,34 +445,36 @@ class DegeneracyDetector {
       const auto neighbors = index.FindKNearest(
           points[i], points, options_.k_neighbors,
           options_.max_neighbor_distance);
-      if (neighbors.size() < 3) {
+      if (neighbors.size() < 2) {
         out[i].normal = Eigen::Vector3f::UnitZ();
         out[i].curvature = 0.0f;
         out[i].valid_normal = false;
         continue;
       }
 
-      Eigen::Vector3f centroid = points[i].position;
-      for (std::size_t idx : neighbors) centroid += points[idx].position;
+      Eigen::Vector2f centroid(points[i].position.x(),
+                               points[i].position.y());
+      for (std::size_t idx : neighbors) {
+        centroid += points[idx].position.head<2>();
+      }
       centroid /= static_cast<float>(neighbors.size() + 1);
 
-      Eigen::Matrix3f cov = Eigen::Matrix3f::Zero();
-      const Eigen::Vector3f diff_self = points[i].position - centroid;
-      cov += diff_self * diff_self.transpose();
+      Eigen::Matrix2f cov = Eigen::Matrix2f::Zero();
+      const Eigen::Vector2f d_self =
+          points[i].position.head<2>() - centroid;
+      cov += d_self * d_self.transpose();
       for (std::size_t idx : neighbors) {
-        const Eigen::Vector3f d = points[idx].position - centroid;
+        const Eigen::Vector2f d = points[idx].position.head<2>() - centroid;
         cov += d * d.transpose();
       }
       cov /= static_cast<float>(neighbors.size() + 1);
 
-      Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> solver(cov);
-      const Eigen::Vector3f eigvals = solver.eigenvalues();
-      const Eigen::Matrix3f eigvecs = solver.eigenvectors();
+      Eigen::SelfAdjointEigenSolver<Eigen::Matrix2f> solver(cov);
+      const Eigen::Vector2f eigvals = solver.eigenvalues();
+      const Eigen::Matrix2f eigvecs = solver.eigenvectors();
 
-      // Smallest eigenvalue -> normal direction.  Eigen returns sorted
-      // eigenvalues in ascending order so column 0 is the answer.
-      out[i].normal = eigvecs.col(0);
-      if (out[i].normal.z() < 0) out[i].normal = -out[i].normal;
+      const Eigen::Vector2f n2 = eigvecs.col(0);  // smallest eigenvalue
+      out[i].normal = Eigen::Vector3f(n2.x(), n2.y(), 0.0f);
       const float sum_eig = eigvals.sum();
       out[i].curvature = (sum_eig > 1e-10f) ? eigvals(0) / sum_eig : 0.0f;
       out[i].valid_normal = true;
